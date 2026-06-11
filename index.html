@@ -1,0 +1,1796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Investment Proposal Tool — SPB Finserv</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0f2744;--blue:#3b82f6;--teal:#0d9488;
+  --bg:#f0f4f8;--card:#fff;--border:#e2e8f0;
+  --text:#1a2332;--muted:#64748b;--light:#f8fafc;
+}
+body{font-family:'Poppins',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+.app{display:flex;min-height:100vh}
+
+/* SIDEBAR */
+.sidebar{width:230px;background:var(--navy);color:#fff;display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sb-logo{padding:12px 18px 12px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:12px}
+.sb-logo-img{width:120px;height:44px;object-fit:contain;flex-shrink:0;background:transparent}
+.sb-logo-img-placeholder{width:44px;height:44px;border-radius:6px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;flex-shrink:0}
+.sb-logo-text p{font-size:11px;color:rgba(255,255,255,.4);margin-top:1px}
+.sb-section{padding:14px 18px 4px;font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:rgba(255,255,255,.3);font-weight:600}
+.sb-item{display:flex;align-items:center;gap:10px;padding:9px 18px;cursor:pointer;font-size:13px;color:rgba(255,255,255,.65);transition:.15s;border-left:3px solid transparent;user-select:none}
+.sb-item:hover{background:rgba(255,255,255,.06);color:#fff}
+.sb-item.active{background:rgba(59,130,246,.18);color:#93c5fd;border-left-color:#3b82f6}
+.sb-item svg{width:15px;height:15px;flex-shrink:0;opacity:.8}
+.sb-item.active svg{opacity:1}
+.sb-footer{padding:14px 18px;margin-top:auto;border-top:1px solid rgba(255,255,255,.06);font-size:11px;color:rgba(255,255,255,.3)}
+
+/* MAIN */
+.main-wrap{flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{background:#fff;border-bottom:1px solid var(--border);padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar-left{display:flex;align-items:center;gap:14px}
+.topbar-logo{height:36px;object-fit:contain;display:block}
+.topbar h1{font-size:15px;font-weight:600;color:var(--navy)}
+.topbar .meta{font-size:12px;color:var(--muted)}
+.main{padding:24px 28px;flex:1}
+
+/* PAGES */
+.page{display:none}
+.page.active{display:block}
+
+/* CARDS */
+.card{background:var(--card);border-radius:12px;border:1px solid var(--border);padding:22px 24px;margin-bottom:18px}
+.card-title{font-size:13px;font-weight:600;color:var(--navy);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.card-title svg{color:var(--blue);width:15px;height:15px;flex-shrink:0}
+
+/* FORMS */
+.fg{display:flex;flex-direction:column;gap:5px}
+.fg label{font-size:12px;font-weight:500;color:#475569}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:15px}
+.grid-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px}
+.full{grid-column:1/-1}
+.iw{position:relative;display:flex;align-items:center}
+.iw input,.iw select{width:100%;padding:8px 36px 8px 11px;border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--text);background:#f9fafb;outline:none;transition:.15s;-webkit-appearance:none;font-family:'Poppins',inherit}
+.iw input:focus,.iw select:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+.iw .sfx{position:absolute;right:10px;font-size:11px;color:var(--muted);font-weight:600;pointer-events:none}
+.iw.pre input{padding-left:24px}
+.iw .pfx{position:absolute;left:9px;font-size:13px;color:var(--muted);pointer-events:none;font-weight:500}
+.radio-row{display:flex;gap:18px;align-items:center;padding:7px 0}
+.radio-row label{display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer}
+.radio-row input[type=radio]{accent-color:var(--blue);width:14px;height:14px}
+.cb-row{display:flex;align-items:center;gap:8px;padding:5px 0}
+.cb-row input[type=checkbox]{accent-color:var(--blue);width:14px;height:14px}
+.cb-row label{font-size:13px;cursor:pointer;color:var(--text)}
+.section-lbl{font-size:12px;font-weight:600;color:var(--blue);text-decoration:underline;margin-bottom:10px;display:block}
+.divider{border:none;border-top:1px solid #f1f5f9;margin:14px 0}
+.hint-text{font-size:11px;color:var(--muted);margin-top:3px}
+.required-star{color:#ef4444;font-size:11px;margin-left:2px}
+
+/* BUTTONS */
+.btn-row{display:flex;gap:12px;justify-content:center;padding-top:6px}
+.btn{padding:9px 26px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:.15s;display:inline-flex;align-items:center;gap:6px;font-family:'Poppins',inherit}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:#2563eb}
+.btn-outline{background:#fff;color:#475569;border:1px solid var(--border)}
+.btn-outline:hover{background:#f8fafc}
+.btn-sm{padding:6px 14px;font-size:12px;border-radius:6px}
+.btn-pdf{background:#dc2626;color:#fff}
+.btn-pdf:hover{background:#b91c1c}
+
+/* RESULTS */
+.result-hero{background:linear-gradient(135deg,var(--navy) 0%,#1e3a5f 100%);border-radius:12px;padding:22px 24px;color:#fff;margin-bottom:18px}
+.result-hero h3{font-size:11px;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px}
+.rg{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+.ri{background:rgba(255,255,255,.09);border-radius:9px;padding:12px 14px}
+.ri .rl{font-size:11px;color:rgba(255,255,255,.55);margin-bottom:4px}
+.ri .rv{font-size:17px;font-weight:700;color:#fff;letter-spacing:-.3px}
+.ri .rs{font-size:11px;color:rgba(255,255,255,.45);margin-top:2px}
+
+/* TABLES */
+.tbl-wrap{overflow-x:auto;border-radius:9px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:500px}
+thead th{background:var(--navy);color:#fff;padding:9px 12px;text-align:left;font-weight:500;white-space:nowrap}
+thead th.r{text-align:right}
+tbody tr:nth-child(even){background:#f8fafc}
+tbody tr:hover{background:#eff6ff}
+tbody td{padding:8px 12px;border-bottom:1px solid #f1f5f9;color:var(--text)}
+tbody td.r{text-align:right}
+tfoot td{padding:9px 12px;font-weight:600;background:#eff6ff;border-top:2px solid var(--blue)}
+
+/* CHART */
+.chart-wrap{position:relative;height:260px;margin-top:8px}
+
+/* ALERT / DISCLAIMER */
+.disclaimer{font-size:11px;color:#94a3b8;line-height:1.7;padding:11px 14px;background:#f8fafc;border-radius:8px;border-left:3px solid #e2e8f0;margin-top:4px}
+
+/* COLOR PICKERS */
+input[type=color]{width:36px;height:30px;padding:2px;border:1px solid var(--border);border-radius:6px;cursor:pointer;background:none}
+.logo-drop{width:130px;height:64px;border:2px dashed var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;background:#f9fafb}
+.logo-drop img{max-width:100%;max-height:100%;object-fit:contain}
+.logo-drop .lph{font-size:11px;color:#94a3b8;text-align:center;padding:4px}
+
+/* SETTINGS */
+.set-group-title{font-size:12px;font-weight:600;color:var(--navy);margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid #f1f5f9}
+textarea{width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--text);background:#f9fafb;resize:vertical;outline:none;font-family:'Poppins',inherit;line-height:1.6}
+textarea:focus{border-color:var(--blue);background:#fff}
+
+/* SAVED BANNER */
+#save-banner{display:none;position:fixed;top:16px;right:24px;z-index:999;background:#15803d;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+</style>
+</head>
+<body>
+
+<div id="save-banner">✓ Settings saved!</div>
+
+<div class="app">
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div id="sb-logo-wrap" style="display:flex;align-items:center;width:100%">
+      <img id="sb-logo-img" src="spb.png" 
+           class="sb-logo-img" alt="SPB Finserv" 
+           onerror="this.style.display='none';document.getElementById('sb-logo-fallback').style.display='flex'">
+      <div id="sb-logo-fallback" class="sb-logo-img-placeholder" style="display:none">SPB</div>
+    </div>
+  </div>
+  <div class="sb-section">Proposals</div>
+  <div class="sb-item active" onclick="showPage('lumpsum')" id="nav-lumpsum">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+    Lumpsum FV
+  </div>
+  <div class="sb-item" onclick="showPage('sip')" id="nav-sip">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+    SIP Future Value
+  </div>
+  <div class="sb-item" onclick="showPage('swp')" id="nav-swp">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    Monthly SWP
+  </div>
+  <div class="sb-item" onclick="showPage('annual')" id="nav-annual">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    Annual Lumpsum
+  </div>
+  <div class="sb-section" style="margin-top:8px">Account</div>
+  <div class="sb-item" onclick="showPage('settings')" id="nav-settings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Settings
+  </div>
+  <div class="sb-footer" id="sb-footer">Investment Proposal Tool</div>
+</aside>
+
+<!-- MAIN -->
+<div class="main-wrap">
+<div class="topbar">
+  <div class="topbar-left">
+    <img id="topbar-logo" class="topbar-logo" src="spb.png" alt="SPB Finserv" onerror="this.style.display='none'">
+    <h1 id="page-title">Lumpsum Investment Proposal</h1>
+  </div>
+  <span class="meta" id="top-date"></span>
+</div>
+<div class="main">
+
+<!-- ========== LUMPSUM PAGE ========== -->
+<div class="page active" id="page-lumpsum">
+  <div class="card">
+    <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>Investment Details</div>
+    <div class="grid-2">
+      <div class="fg">
+        <label>Lumpsum Investment <span class="required-star">*</span></label>
+        <div class="iw pre"><span class="pfx">₹</span><input type="number" id="ls-amt" value="500000" min="1000"></div>
+      </div>
+      <div class="fg">
+        <label>Investment Period</label>
+        <div class="iw"><input type="number" id="ls-yrs" value="10" min="1" max="50"><span class="sfx">Yrs</span></div>
+      </div>
+    </div>
+    <hr class="divider">
+    <span class="section-lbl">Assumed Rate Of Return:</span>
+    <div class="grid-2">
+      <div class="fg">
+        <label>Scenario 1</label>
+        <div class="iw"><input type="number" id="ls-r1" value="12" min="1" max="50" step="0.5"><span class="sfx">%</span></div>
+      </div>
+      <div class="fg">
+        <label>Scenario 2 (Optional)</label>
+        <div class="iw"><input type="number" id="ls-r2" value="15" min="0" max="50" step="0.5"><span class="sfx">%</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Report Options</div>
+    <div class="grid-2">
+      <div class="fg">
+        <label>Client / Proposal Name</label>
+        <div class="iw"><input type="text" id="ls-client" placeholder="Enter client name"></div>
+      </div>
+      <div class="fg">
+        <label>Report Type</label>
+        <div class="radio-row">
+          <label><input type="radio" name="ls-rpt" value="summary"> Summary</label>
+          <label><input type="radio" name="ls-rpt" value="detailed" checked> Detailed</label>
+        </div>
+      </div>
+    </div>
+    <div class="cb-row"><input type="checkbox" id="ls-show-graph" checked><label for="ls-show-graph">Include growth chart</label></div>
+    <div class="cb-row"><input type="checkbox" id="ls-show-table" checked><label for="ls-show-table">Include year-wise projected table</label></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-outline" onclick="resetLS()">↺ Reset</button>
+    <button class="btn btn-primary" onclick="calcLS()">⚡ Calculate & Preview</button>
+  </div>
+  <div id="ls-results" style="display:none;margin-top:22px">
+    <div class="result-hero">
+      <h3>Expected Future Value</h3>
+      <div class="rg">
+        <div class="ri"><div class="rl">Amount Invested</div><div class="rv" id="ls-rv-inv">₹5,00,000</div></div>
+        <div class="ri" id="ls-ri1"><div class="rl" id="ls-rl1">Scenario 1 @ 12%</div><div class="rv" id="ls-rv1">₹15,52,924</div><div class="rs" id="ls-rs1">Gain: ₹10,52,924</div></div>
+        <div class="ri" id="ls-ri2" style="display:none"><div class="rl" id="ls-rl2">Scenario 2 @ 15%</div><div class="rv" id="ls-rv2">₹20,22,779</div><div class="rs" id="ls-rs2">Gain: ₹15,22,779</div></div>
+      </div>
+    </div>
+    <div class="card" id="ls-table-card">
+      <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>Year-wise Projected Annual Investment Value</div>
+      <div class="tbl-wrap"><table id="ls-tbl">
+        <thead><tr><th>Year</th><th>Annual Investment</th><th class="r" id="ls-th1">Value @ 12%</th><th class="r" id="ls-th2">Value @ 15%</th></tr></thead>
+        <tbody id="ls-tbody"></tbody>
+      </table></div>
+    </div>
+    <div class="card" id="ls-chart-card">
+      <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Graphic Representation</div>
+      <div class="chart-wrap"><canvas id="ls-chart" role="img" aria-label="Lumpsum investment growth"></canvas></div>
+    </div>
+    <div class="disclaimer" id="ls-disc"></div>
+    <div class="btn-row" style="margin-top:14px">
+      <button class="btn btn-pdf" onclick="pdfLS()">⬇ Download PDF Report</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== SIP PAGE ========== -->
+<div class="page" id="page-sip">
+  <div class="card">
+    <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>SIP Details</div>
+    <div class="grid-2">
+      <div class="fg">
+        <label>Monthly SIP Amount <span class="required-star">*</span></label>
+        <div class="iw pre"><span class="pfx">₹</span><input type="number" id="sip-amt" value="10000" min="100"></div>
+      </div>
+      <div class="fg">
+        <label>SIP Period</label>
+        <div class="iw"><input type="number" id="sip-yrs" value="10" min="1" max="50"><span class="sfx">Yrs</span></div>
+      </div>
+    </div>
+    <hr class="divider">
+    <span class="section-lbl">Assumed Rate Of Return:</span>
+    <div class="grid-2">
+      <div class="fg"><label>Scenario 1</label><div class="iw"><input type="number" id="sip-r1" value="12" min="1" max="50" step="0.5"><span class="sfx">%</span></div></div>
+      <div class="fg"><label>Scenario 2 (Optional)</label><div class="iw"><input type="number" id="sip-r2" value="15" min="0" max="50" step="0.5"><span class="sfx">%</span></div></div>
+    </div>
+    <hr class="divider">
+    <div class="fg full">
+      <label>Include Step-Up Comparison</label>
+      <div class="radio-row">
+        <label><input type="radio" name="sip-step" value="yes" onchange="toggleSIPStep(true)"> Yes</label>
+        <label><input type="radio" name="sip-step" value="no" checked onchange="toggleSIPStep(false)"> No</label>
+      </div>
+    </div>
+    <div id="sip-step-wrap" style="display:none;margin-top:8px">
+      <div class="fg" style="max-width:200px"><label>Annual Step-Up %</label><div class="iw"><input type="number" id="sip-step-pct" value="10" min="1" max="50"><span class="sfx">%</span></div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Report Options</div>
+    <div class="grid-2">
+      <div class="fg"><label>Client / Proposal Name</label><div class="iw"><input type="text" id="sip-client" placeholder="Enter client name"></div></div>
+      <div class="fg"><label>Report Type</label><div class="radio-row">
+        <label><input type="radio" name="sip-rpt" value="summary"> Summary</label>
+        <label><input type="radio" name="sip-rpt" value="detailed" checked> Detailed</label>
+      </div></div>
+    </div>
+    <div class="cb-row"><input type="checkbox" id="sip-show-graph" checked><label for="sip-show-graph">Include growth chart</label></div>
+    <div class="cb-row"><input type="checkbox" id="sip-show-table" checked><label for="sip-show-table">Include year-wise projected table</label></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-outline" onclick="resetSIP()">↺ Reset</button>
+    <button class="btn btn-primary" onclick="calcSIP()">⚡ Calculate & Preview</button>
+  </div>
+  <div id="sip-results" style="display:none;margin-top:22px">
+    <div class="result-hero">
+      <h3>SIP Future Value Summary</h3>
+      <div class="rg">
+        <div class="ri"><div class="rl">Total Investment</div><div class="rv" id="sip-rv-total">₹12,00,000</div></div>
+        <div class="ri"><div class="rl" id="sip-rl1">FV @ Sc.1 (12%)</div><div class="rv" id="sip-rv1">₹22,40,359</div></div>
+        <div class="ri" id="sip-ri2" style="display:none"><div class="rl" id="sip-rl2">FV @ Sc.2 (15%)</div><div class="rv" id="sip-rv2">₹26,30,182</div></div>
+        <div class="ri"><div class="rl">Wealth Gained (Sc.1)</div><div class="rv" id="sip-rv-gain">₹10,40,359</div></div>
+      </div>
+    </div>
+    <div class="card" id="sip-table-card">
+      <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>Year-Wise Projected Value</div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Year</th><th class="r">Monthly SIP</th><th class="r">Annual Invest.</th><th class="r">Cumul. Invest.</th><th class="r" id="sip-th1">FV @ Sc.1</th><th class="r" id="sip-th2">FV @ Sc.2</th></tr></thead>
+        <tbody id="sip-tbody"></tbody>
+        <tfoot><tr id="sip-tfoot"></tr></tfoot>
+      </table></div>
+    </div>
+    <div class="card" id="sip-chart-card">
+      <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Graphic Representation</div>
+      <div class="chart-wrap"><canvas id="sip-chart" role="img" aria-label="SIP investment growth over time"></canvas></div>
+    </div>
+    <div class="disclaimer" id="sip-disc"></div>
+    <div class="btn-row" style="margin-top:14px">
+      <button class="btn btn-pdf" onclick="pdfSIP()">⬇ Download PDF Report</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== SWP PAGE ========== -->
+<div class="page" id="page-swp">
+  <div class="card">
+    <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>SWP Details</div>
+    <div class="grid-2">
+      <div class="fg">
+        <label>Current Age (Optional)</label>
+        <div class="iw"><input type="number" id="swp-age" placeholder="e.g. 60" min="18" max="100"><span class="sfx">Yrs</span></div>
+      </div>
+      <div class="fg">
+        <label>Initial Investment <span class="required-star">*</span></label>
+        <div class="iw pre"><span class="pfx">₹</span><input type="number" id="swp-corpus" value="10000000"></div>
+      </div>
+    </div>
+    <div class="grid-2" style="margin-top:12px">
+      <div class="fg">
+        <label>Deferment Period</label>
+        <div class="radio-row" style="margin-bottom:6px">
+          <label><input type="radio" name="swp-defer" value="yes" onchange="toggleDefer(true)"> Yes</label>
+          <label><input type="radio" name="swp-defer" value="no" checked onchange="toggleDefer(false)"> No</label>
+        </div>
+        <div id="swp-defer-wrap" style="display:none">
+          <div class="iw"><input type="number" id="swp-defer-yrs" value="0" min="0" max="20"><span class="sfx">Yrs</span></div>
+        </div>
+      </div>
+      <div class="fg">
+        <label>SWP Period</label>
+        <div class="iw"><input type="number" id="swp-period" value="25" min="1" max="50"><span class="sfx">Yrs</span></div>
+      </div>
+    </div>
+    <hr class="divider">
+    <span class="section-lbl">Assumed Rate Of Return:</span>
+    <div class="grid-2">
+      <div class="fg"><label>Scenario 1</label><div class="iw"><input type="number" id="swp-r1" value="10" min="1" max="30" step="0.5"><span class="sfx">%</span></div></div>
+      <div class="fg"><label>Scenario 2 (Optional)</label><div class="iw"><input type="number" id="swp-r2" value="12" min="0" max="30" step="0.5"><span class="sfx">%</span></div></div>
+    </div>
+    <hr class="divider">
+    <div class="grid-2">
+      <div class="fg">
+        <label>Balance Required at End of SWP</label>
+        <div class="iw pre"><span class="pfx">₹</span><input type="number" id="swp-balance-req" value="0" min="0"></div>
+        <span class="hint-text">Enter 0 for complete depletion</span>
+      </div>
+    </div>
+    <hr class="divider">
+    <div class="grid-2">
+      <div class="fg">
+        <label>Include Inflation</label>
+        <div class="radio-row">
+          <label><input type="radio" name="swp-infl" value="yes" onchange="toggleInflation(true)"> Yes</label>
+          <label><input type="radio" name="swp-infl" value="no" checked onchange="toggleInflation(false)"> No</label>
+        </div>
+      </div>
+      <div class="fg" id="swp-infl-rate-wrap" style="opacity:.4;pointer-events:none">
+        <label>Expected Inflation Rate</label>
+        <div class="iw"><input type="number" id="swp-infl-rate" value="6" min="1" max="20" step="0.5"><span class="sfx">%</span></div>
+      </div>
+    </div>
+    <hr class="divider">
+    <div class="grid-2">
+      <div class="fg">
+        <label>Include Taxation</label>
+        <div class="radio-row">
+          <label><input type="radio" name="swp-tax" value="yes" onchange="toggleTax(true)"> Yes</label>
+          <label><input type="radio" name="swp-tax" value="no" checked onchange="toggleTax(false)"> No</label>
+        </div>
+      </div>
+    </div>
+    <div id="swp-tax-wrap" style="display:none;margin-top:10px">
+      <div class="grid-4">
+        <div class="fg">
+          <label>Inflation Rate for Indexation</label>
+          <div class="iw"><input type="number" id="swp-idx-rate" value="6" min="0" max="20" step="0.5"><span class="sfx">%</span></div>
+        </div>
+        <div class="fg">
+          <label>Short Term Tax Rate</label>
+          <div class="iw"><input type="number" id="swp-stcg" value="20" min="0" max="50" step="0.5"><span class="sfx">%</span></div>
+        </div>
+        <div class="fg">
+          <label>STCG for period upto</label>
+          <div class="iw"><input type="number" id="swp-stcg-yrs" value="1" min="1" max="10"><span class="sfx">Yrs</span></div>
+        </div>
+        <div class="fg">
+          <label>Long Term Tax Rate</label>
+          <div class="iw"><input type="number" id="swp-ltcg" value="12.5" min="0" max="50" step="0.5"><span class="sfx">%</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Report Options</div>
+    <div class="grid-2">
+      <div class="fg"><label>Client / Proposal Name</label><div class="iw"><input type="text" id="swp-client" placeholder="Enter client name"></div></div>
+      <div class="fg"><label>Report Type</label><div class="radio-row">
+        <label><input type="radio" name="swp-rpt" value="summary"> Summary</label>
+        <label><input type="radio" name="swp-rpt" value="detailed" checked> Detailed</label>
+      </div></div>
+    </div>
+    <div class="cb-row"><input type="checkbox" id="swp-show-graph" checked><label for="swp-show-graph">Include corpus chart</label></div>
+    <div class="cb-row"><input type="checkbox" id="swp-show-tax-table" checked><label for="swp-show-tax-table">Include annual tax &amp; post-tax withdrawal table (if tax enabled)</label></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-outline" onclick="resetSWP()">↺ Reset</button>
+    <button class="btn btn-primary" onclick="calcSWP()">⚡ Calculate & Preview</button>
+  </div>
+  <div id="swp-results" style="display:none;margin-top:22px">
+    <div class="result-hero">
+      <h3>Monthly SWP Calculation Summary</h3>
+      <div class="rg">
+        <div class="ri"><div class="rl">Initial Corpus</div><div class="rv" id="swp-rv-corpus">₹1,00,00,000</div></div>
+        <div class="ri"><div class="rl" id="swp-rl1">1st Year Monthly SWP (Sc.1)</div><div class="rv" id="swp-rv1">₹52,844</div></div>
+        <div class="ri" id="swp-ri2" style="display:none"><div class="rl" id="swp-rl2">1st Year Monthly SWP (Sc.2)</div><div class="rv" id="swp-rv2">₹63,502</div></div>
+        <div class="ri"><div class="rl" id="swp-rl-total1">Total Withdrawal (Sc.1)</div><div class="rv" id="swp-rv-total1">₹3,47,91,036</div></div>
+        <div class="ri" id="swp-ri-total2" style="display:none"><div class="rl" id="swp-rl-total2">Total Withdrawal (Sc.2)</div><div class="rv" id="swp-rv-total2">₹4,18,07,845</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>Monthly Withdrawal &amp; Projected Investment Value</div>
+      <div class="tbl-wrap">
+        <table id="swp-main-tbl">
+          <thead>
+            <tr>
+              <th rowspan="2" style="vertical-align:middle">Age / Year</th>
+              <th colspan="3" style="text-align:center;background:#1e5a8a" id="swp-col-h1">Scenario 1 @ 10%</th>
+              <th colspan="3" style="text-align:center;background:#0f6b5c" id="swp-col-h2">Scenario 2 @ 12%</th>
+            </tr>
+            <tr>
+              <th class="r" style="background:#1a4f7a">₹</th>
+              <th class="r" style="background:#1a4f7a">Monthly SWP</th>
+              <th class="r" style="background:#1a4f7a">Year End Balance</th>
+              <th class="r" style="background:#0a5f52">₹</th>
+              <th class="r" style="background:#0a5f52">Monthly SWP</th>
+              <th class="r" style="background:#0a5f52">Year End Balance</th>
+            </tr>
+          </thead>
+          <tbody id="swp-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card" id="swp-tax-card" style="display:none">
+      <div class="card-title">Annual Tax &amp; Post-Tax Withdrawal</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th rowspan="2" style="vertical-align:middle">Year</th>
+              <th colspan="3" style="text-align:center;background:#1e5a8a" id="swp-tax-h1">Scenario 1 @ 10%</th>
+              <th colspan="3" style="text-align:center;background:#0f6b5c" id="swp-tax-h2">Scenario 2 @ 12%</th>
+            </tr>
+            <tr>
+              <th class="r" style="background:#1a4f7a">Annual Withdrawal</th>
+              <th class="r" style="background:#1a4f7a">Tax Payable</th>
+              <th class="r" style="background:#1a4f7a">Post-Tax Withdrawal</th>
+              <th class="r" style="background:#0a5f52">Annual Withdrawal</th>
+              <th class="r" style="background:#0a5f52">Tax Payable</th>
+              <th class="r" style="background:#0a5f52">Post-Tax Withdrawal</th>
+            </tr>
+          </thead>
+          <tbody id="swp-tax-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card" id="swp-chart-card">
+      <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Corpus Depletion Chart</div>
+      <div class="chart-wrap"><canvas id="swp-chart" role="img" aria-label="SWP corpus depletion"></canvas></div>
+    </div>
+    <div class="disclaimer" id="swp-disc"></div>
+    <div class="btn-row" style="margin-top:14px">
+      <button class="btn btn-pdf" onclick="pdfSWP()">⬇ Download PDF Report</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== ANNUAL LUMPSUM PAGE ========== -->
+<div class="page" id="page-annual">
+  <div class="card">
+    <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Annual Lumpsum Investment Details</div>
+    <div class="grid-2">
+      <div class="fg">
+        <label>Annual Investment Amount <span class="required-star">*</span></label>
+        <div class="iw pre"><span class="pfx">₹</span><input type="number" id="ann-amt" value="100000" min="1000"></div>
+      </div>
+      <div class="fg">
+        <label>Investment Period</label>
+        <div class="iw"><input type="number" id="ann-yrs" value="10" min="1" max="50"><span class="sfx">Yrs</span></div>
+      </div>
+    </div>
+    <hr class="divider">
+    <span class="section-lbl">Assumed Rate Of Return:</span>
+    <div class="grid-2">
+      <div class="fg"><label>Scenario 1</label><div class="iw"><input type="number" id="ann-r1" value="12" min="1" max="50" step="0.5"><span class="sfx">%</span></div></div>
+      <div class="fg"><label>Scenario 2 (Optional)</label><div class="iw"><input type="number" id="ann-r2" value="15" min="0" max="50" step="0.5"><span class="sfx">%</span></div></div>
+    </div>
+    <hr class="divider">
+    <div class="fg">
+      <label>Annual Step-Up</label>
+      <div class="radio-row">
+        <label><input type="radio" name="ann-step" value="yes" onchange="toggleAnnStep(true)"> Yes</label>
+        <label><input type="radio" name="ann-step" value="no" checked onchange="toggleAnnStep(false)"> No</label>
+      </div>
+    </div>
+    <div id="ann-step-wrap" style="display:none;margin-top:8px">
+      <div class="fg" style="max-width:200px"><label>Annual Increase %</label><div class="iw"><input type="number" id="ann-step-pct" value="10" min="1" max="50"><span class="sfx">%</span></div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Report Options</div>
+    <div class="grid-2">
+      <div class="fg"><label>Client / Proposal Name</label><div class="iw"><input type="text" id="ann-client" placeholder="Enter client name"></div></div>
+      <div class="fg"><label>Report Type</label><div class="radio-row">
+        <label><input type="radio" name="ann-rpt" value="summary"> Summary</label>
+        <label><input type="radio" name="ann-rpt" value="detailed" checked> Detailed</label>
+      </div></div>
+    </div>
+    <div class="cb-row"><input type="checkbox" id="ann-show-graph" checked><label for="ann-show-graph">Include growth chart</label></div>
+    <div class="cb-row"><input type="checkbox" id="ann-show-table" checked><label for="ann-show-table">Include year-wise projected table</label></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-outline" onclick="resetANN()">↺ Reset</button>
+    <button class="btn btn-primary" onclick="calcANN()">⚡ Calculate & Preview</button>
+  </div>
+  <div id="ann-results" style="display:none;margin-top:22px">
+    <div class="result-hero">
+      <h3>Annual Lumpsum Results</h3>
+      <div class="rg">
+        <div class="ri"><div class="rl">Total Invested</div><div class="rv" id="ann-rv-total">₹10,00,000</div></div>
+        <div class="ri"><div class="rl" id="ann-rl1">FV @ Sc.1 (12%)</div><div class="rv" id="ann-rv1">₹19,65,458</div></div>
+        <div class="ri" id="ann-ri2" style="display:none"><div class="rl" id="ann-rl2">FV @ Sc.2 (15%)</div><div class="rv" id="ann-rv2">₹23,04,974</div></div>
+        <div class="ri"><div class="rl">Wealth Gained (Sc.1)</div><div class="rv" id="ann-rv-gain">₹9,65,458</div></div>
+      </div>
+    </div>
+    <div class="card" id="ann-table-card">
+      <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>Year-wise Projected Value</div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Year</th><th class="r">Annual Investment</th><th class="r">Cumul. Invested</th><th class="r" id="ann-th1">FV @ Sc.1</th><th class="r" id="ann-th2">FV @ Sc.2</th></tr></thead>
+        <tbody id="ann-tbody"></tbody>
+      </table></div>
+    </div>
+    <div class="card" id="ann-chart-card">
+      <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Graphic Representation</div>
+      <div class="chart-wrap"><canvas id="ann-chart" role="img" aria-label="Annual lumpsum growth"></canvas></div>
+    </div>
+    <div class="disclaimer" id="ann-disc"></div>
+    <div class="btn-row" style="margin-top:14px">
+      <button class="btn btn-pdf" onclick="pdfANN()">⬇ Download PDF Report</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== SETTINGS PAGE ========== -->
+<div class="page" id="page-settings">
+  <div class="card">
+    <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Your Profile</div>
+    <div class="grid-2">
+      <div class="fg"><label>First Name</label><div class="iw"><input type="text" id="s-fname" placeholder="Prafull"></div></div>
+      <div class="fg"><label>Last Name</label><div class="iw"><input type="text" id="s-lname" placeholder="Bothra"></div></div>
+      <div class="fg"><label>Company Name</label><div class="iw"><input type="text" id="s-company" placeholder="SPB Finserv Private Limited"></div></div>
+      <div class="fg"><label>Phone</label><div class="iw"><input type="tel" id="s-phone" placeholder="9372611447"></div></div>
+      <div class="fg"><label>Email</label><div class="iw"><input type="email" id="s-email" placeholder="sandpwealth@gmail.com"></div></div>
+      <div class="fg"><label>Website (optional)</label><div class="iw"><input type="text" id="s-website" placeholder="www.spbfinserv.com"></div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>Registration &amp; Regulatory</div>
+    <div class="grid-3">
+      <div class="fg"><label>ARN Number</label><div class="iw"><input type="text" id="s-arn" placeholder="ARN-XXXXXX"></div></div>
+      <div class="fg"><label>EUIN</label><div class="iw"><input type="text" id="s-euin" placeholder="E-XXXXXX"></div></div>
+      <div class="fg"><label>GST Number</label><div class="iw"><input type="text" id="s-gst" placeholder="22XXXXX1234X1ZX"></div></div>
+    </div>
+    <div class="fg" style="margin-top:12px">
+      <label>AMFI-Registered Mutual Fund Distributor</label>
+      <div class="radio-row">
+        <label><input type="radio" name="s-amfi" value="yes" checked> Yes</label>
+        <label><input type="radio" name="s-amfi" value="no"> No</label>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Address</div>
+    <div class="grid-2">
+      <div class="fg"><label>Address Line 1</label><div class="iw"><input type="text" id="s-addr1" placeholder="212, Lalganga Business Park"></div></div>
+      <div class="fg"><label>Address Line 2</label><div class="iw"><input type="text" id="s-addr2" placeholder="Raipur, Chhattisgarh - 492001"></div></div>
+      <div class="fg"><label>City</label><div class="iw"><input type="text" id="s-city" placeholder="Raipur"></div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r="2.5"/><path d="M17 12h2l1 9H4l1-9h2"/><path d="M7 12c0-3.87 2.69-7 6-7"/><path d="M17 12c0 3.87-2.69 7-6 7"/></svg>Branding</div>
+    <div class="grid-2">
+      <div class="fg">
+        <label>Brand Color 1 (Primary)</label>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:5px">
+          <input type="color" id="s-color1" value="#0f2744" oninput="document.getElementById('s-c1hex').textContent=this.value">
+          <span id="s-c1hex" style="font-size:12px;color:var(--muted)">#0f2744</span>
+        </div>
+      </div>
+      <div class="fg">
+        <label>Brand Color 2 (Accent)</label>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:5px">
+          <input type="color" id="s-color2" value="#3b82f6" oninput="document.getElementById('s-c2hex').textContent=this.value">
+          <span id="s-c2hex" style="font-size:12px;color:var(--muted)">#3b82f6</span>
+        </div>
+      </div>
+      <div class="fg">
+        <label>Company Logo (PNG preferred)</label>
+        <div style="display:flex;align-items:center;gap:14px;margin-top:6px">
+          <div class="logo-drop" id="logo-box" onclick="document.getElementById('logo-file').click()">
+            <div class="lph"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><br>Click to upload</div>
+          </div>
+          <input type="file" id="logo-file" accept="image/*" style="display:none" onchange="uploadLogo(event)">
+          <div>
+            <button class="btn btn-outline btn-sm" onclick="document.getElementById('logo-file').click()">↑ Upload</button>
+            <p class="hint-text" style="margin-top:6px">PNG with transparent background recommended</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Default Disclaimer Text</div>
+    <textarea id="s-disclaimer" rows="4">This illustration and returns assumed are on the basis of the request made by you. These are neither indicative nor guaranteed returns. Mutual fund investments are subject to market risks. Do read all scheme-related documents carefully.</textarea>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-outline" onclick="loadDefaultSettings()">↺ Reset to Default</button>
+    <button class="btn btn-primary" onclick="saveSettings()">✓ Save Settings</button>
+  </div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /main-wrap -->
+</div><!-- /app -->
+
+<script>
+// ===================== STATE =====================
+let S={
+  fname:'Prafull',lname:'Bothra',company:'SPB Finserv Private Limited',
+  phone:'9372611447',email:'sandpwealth@gmail.com',website:'',
+  arn:'',euin:'',gst:'',amfi:'yes',
+  addr1:'212, Lalganga Business Park',addr2:'Raipur, Chhattisgarh - 492001',city:'Raipur',
+  color1:'#0f2744',color2:'#3b82f6',logo:null,
+  disclaimer:'This illustration and returns assumed are on the basis of the request made by you. These are neither indicative nor guaranteed returns. Mutual fund investments are subject to market risks. Do read all scheme-related documents carefully.'
+};
+let charts={ls:null,sip:null,swp:null,ann:null};
+
+// ===================== UTILS =====================
+// Indian number formatting with rupee symbol for UI
+const INR=n=>{
+  if(n===null||n===undefined)return '-';
+  const v=Math.round(n);
+  if(v<0) return '-Rs.'+Math.abs(v).toLocaleString('en-IN');
+  return 'Rs.'+v.toLocaleString('en-IN');
+};
+// UI display keeps the unicode rupee symbol
+const INRui=n=>{
+  if(n===null||n===undefined)return '-';
+  const v=Math.round(n);
+  if(v<0) return '-\u20B9'+Math.abs(v).toLocaleString('en-IN');
+  return '\u20B9'+v.toLocaleString('en-IN');
+};
+
+const V=id=>document.getElementById(id);
+const hexRGB=h=>{const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return[r,g,b]};
+
+document.getElementById('top-date').textContent='Report Date: '+new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric'});
+
+// ===================== NAVIGATION =====================
+function showPage(p){
+  document.querySelectorAll('.page').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(e=>e.classList.remove('active'));
+  V('page-'+p).classList.add('active');
+  V('nav-'+p).classList.add('active');
+  const titles={lumpsum:'Lumpsum Investment Proposal',sip:'SIP Future Value Proposal',swp:'Monthly SWP Calculation',annual:'Annual Lumpsum Investment Proposal',settings:'Settings & Company Profile'};
+  V('page-title').textContent=titles[p];
+}
+
+// ===================== TOGGLE HELPERS =====================
+function toggleSIPStep(v){V('sip-step-wrap').style.display=v?'block':'none'}
+function toggleDefer(v){V('swp-defer-wrap').style.display=v?'block':'none'}
+function toggleInflation(v){const w=V('swp-infl-rate-wrap');w.style.opacity=v?'1':'0.4';w.style.pointerEvents=v?'auto':'none'}
+function toggleTax(v){V('swp-tax-wrap').style.display=v?'block':'none'}
+function toggleAnnStep(v){V('ann-step-wrap').style.display=v?'block':'none'}
+
+// ===================== MATH =====================
+// Lumpsum FV: P*(1+r/100)^n
+function lumpsumFV(P,r,n){return P*Math.pow(1+r/100,n)}
+
+// SIP FV — Masterstroke / CFP style: end-of-period (ordinary annuity)
+// FV = M * [(1+i)^n - 1] / i  where i = monthly rate, n = total months
+function sipFV(m,r,n){
+  const i=r/12/100;
+  const months=n*12;
+  return m*(Math.pow(1+i,months)-1)/i;
+}
+function sipFVAtYear(m,r,y){return sipFV(m,r,y)}
+
+// SWP monthly calculation
+function calcSWPMonthly(corpus,annRate,swpYears,balanceReq,inflRate,includeTax,stcgRate,ltcgRate,stcgYrs,indexRate){
+  const mr=annRate/12/100;
+  function simulate(firstMonthly){
+    let bal=corpus;
+    for(let y=0;y<swpYears;y++){
+      const monthly=firstMonthly*Math.pow(1+inflRate/100,y);
+      for(let m=0;m<12;m++){
+        bal=bal*(1+mr)-monthly;
+        if(bal<0){bal=0;break}
+      }
+    }
+    return bal;
+  }
+  if(inflRate===0){
+    const n=swpYears*12;
+    const pmt=(corpus-balanceReq*Math.pow(1+mr,-n))*(mr)/(1-Math.pow(1+mr,-n));
+    return Math.max(0,pmt);
+  }
+  let lo=0,hi=corpus/10;
+  for(let i=0;i<60;i++){
+    const mid=(lo+hi)/2;
+    const rem=simulate(mid);
+    if(rem>balanceReq)lo=mid;else hi=mid;
+  }
+  return (lo+hi)/2;
+}
+
+function simulateSWP(corpus,annRate,swpYears,firstMonthly,inflRate,age,includeTax,stcgRate,ltcgRate,stcgYrs,indexRate,balanceReq){
+  const mr=annRate/12/100;
+  let bal=corpus;
+  let totalW=0;
+  const rows=[];
+  const costBasis=corpus;
+  for(let y=0;y<swpYears;y++){
+    const monthly=firstMonthly*Math.pow(1+inflRate/100,y);
+    const annualW=monthly*12;
+    const openBal=bal;
+    let yearInterest=0;
+    for(let m=0;m<12;m++){
+      const interest=bal*mr;
+      yearInterest+=interest;
+      bal=bal+interest-monthly;
+      if(bal<0){bal=0;}
+    }
+    let taxPayable=0,postTaxW=annualW;
+    if(includeTax){
+      const gainFraction=Math.max(0,(openBal-costBasis)/openBal);
+      const gainPortion=annualW*gainFraction;
+      const costPortion=annualW-gainPortion;
+      const indexedCost=costPortion*Math.pow(1+indexRate/100,y);
+      const taxableGain=Math.max(0,gainPortion-Math.max(0,indexedCost-costPortion));
+      const rate=y<stcgYrs?stcgRate:ltcgRate;
+      taxPayable=taxableGain*(rate/100);
+      postTaxW=annualW-taxPayable;
+    }
+    totalW+=annualW;
+    rows.push({
+      age:age?age+1+y:null,
+      year:y+1,
+      monthly:Math.round(monthly),
+      yearEndBal:Math.round(Math.max(0,bal)),
+      annualW:Math.round(annualW),
+      taxPayable:Math.round(taxPayable),
+      postTaxW:Math.round(postTaxW),
+    });
+    if(bal<=0)break;
+  }
+  return{rows,totalW};
+}
+
+// ===================== CALCULATE LUMPSUM =====================
+function calcLS(){
+  const P=parseFloat(V('ls-amt').value)||500000;
+  const n=parseInt(V('ls-yrs').value)||10;
+  const r1=parseFloat(V('ls-r1').value)||12;
+  const r2=parseFloat(V('ls-r2').value)||0;
+  const fv1=lumpsumFV(P,r1,n);
+  const fv2=r2>0?lumpsumFV(P,r2,n):0;
+
+  V('ls-rv-inv').textContent=INRui(P);
+  V('ls-rl1').textContent=`Scenario 1 @ ${r1}%`;
+  V('ls-rv1').textContent=INRui(fv1);
+  V('ls-rs1').textContent=`Gain: ${INRui(fv1-P)}`;
+  if(r2>0){
+    V('ls-ri2').style.display='block';
+    V('ls-rl2').textContent=`Scenario 2 @ ${r2}%`;
+    V('ls-rv2').textContent=INRui(fv2);
+    V('ls-rs2').textContent=`Gain: ${INRui(fv2-P)}`;
+  } else V('ls-ri2').style.display='none';
+
+  V('ls-th1').textContent=`Year End Value @ ${r1}%`;
+  if(r2>0)V('ls-th2').textContent=`Year End Value @ ${r2}%`;
+
+  const tbody=V('ls-tbody');tbody.innerHTML='';
+  const labels=[],v1s=[],v2s=[];
+  for(let y=1;y<=n;y++){
+    const v1=lumpsumFV(P,r1,y);
+    const v2=r2>0?lumpsumFV(P,r2,y):null;
+    labels.push(y);v1s.push(v1);if(v2)v2s.push(v2);
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${y}</td><td>${y===1?INRui(P):'—'}</td><td class="r">${INRui(v1)}</td><td class="r">${v2?INRui(v2):'—'}</td>`;
+    tbody.appendChild(tr);
+  }
+
+  const showTable=V('ls-show-table').checked;
+  const showGraph=V('ls-show-graph').checked;
+  V('ls-table-card').style.display=showTable?'block':'none';
+  V('ls-chart-card').style.display=showGraph?'block':'none';
+
+  if(showGraph){
+    if(charts.ls)charts.ls.destroy();
+    charts.ls=new Chart(V('ls-chart'),{
+      type:'line',
+      data:{labels,datasets:[
+        {label:'Invested',data:Array(n).fill(P),borderColor:'#64748b',borderDash:[5,5],borderWidth:1.5,pointRadius:0,fill:false},
+        {label:`FV @ ${r1}%`,data:v1s,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.08)',borderWidth:2.5,pointRadius:3,tension:0.3,fill:true},
+        ...(r2>0?[{label:`FV @ ${r2}%`,data:v2s,borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,0.08)',borderWidth:2.5,pointRadius:3,tension:0.3,fill:true}]:[])
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'top'}},scales:{x:{title:{display:true,text:'Year'}},y:{ticks:{callback:v=>{const l=Math.round(v/100000);return l+'L'}}}}}
+    });
+  }
+  V('ls-disc').textContent='* '+S.disclaimer+' Report Date: '+new Date().toLocaleDateString('en-GB');
+  V('ls-results').style.display='block';
+  setTimeout(()=>V('ls-results').scrollIntoView({behavior:'smooth',block:'start'}),100);
+}
+function resetLS(){V('ls-amt').value=500000;V('ls-yrs').value=10;V('ls-r1').value=12;V('ls-r2').value=15;V('ls-client').value='';V('ls-results').style.display='none'}
+
+// ===================== CALCULATE SIP =====================
+function calcSIP(){
+  const m=parseFloat(V('sip-amt').value)||10000;
+  const n=parseInt(V('sip-yrs').value)||10;
+  const r1=parseFloat(V('sip-r1').value)||12;
+  const r2=parseFloat(V('sip-r2').value)||0;
+  const totalInv=m*n*12;
+  const fv1=sipFV(m,r1,n);
+  const fv2=r2>0?sipFV(m,r2,n):0;
+
+  V('sip-rv-total').textContent=INRui(totalInv);
+  V('sip-rl1').textContent=`FV @ Scenario 1 (${r1}%)`;
+  V('sip-rv1').textContent=INRui(fv1);
+  V('sip-rv-gain').textContent=INRui(fv1-totalInv);
+  if(r2>0){
+    V('sip-ri2').style.display='block';
+    V('sip-rl2').textContent=`FV @ Scenario 2 (${r2}%)`;
+    V('sip-rv2').textContent=INRui(fv2);
+  } else V('sip-ri2').style.display='none';
+
+  V('sip-th1').textContent=`FV @ Sc.1 (${r1}%)`;
+  if(r2)V('sip-th2').textContent=`FV @ Sc.2 (${r2}%)`;
+
+  const tbody=V('sip-tbody');tbody.innerHTML='';
+  const labels=[],cumArr=[],v1s=[],v2s=[];
+  for(let y=1;y<=n;y++){
+    const v1=sipFVAtYear(m,r1,y);
+    const v2=r2>0?sipFVAtYear(m,r2,y):null;
+    const ci=m*y*12;
+    labels.push(y);cumArr.push(ci);v1s.push(v1);if(v2)v2s.push(v2);
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${y}</td><td class="r">${INRui(m)}</td><td class="r">${INRui(m*12)}</td><td class="r">${INRui(ci)}</td><td class="r">${INRui(v1)}</td><td class="r">${v2?INRui(v2):'—'}</td>`;
+    tbody.appendChild(tr);
+  }
+  V('sip-tfoot').innerHTML=`<td colspan="3"><strong>Total</strong></td><td class="r">${INRui(totalInv)}</td><td class="r">${INRui(fv1)}</td><td class="r">${r2>0?INRui(fv2):'—'}</td>`;
+
+  const showTable=V('sip-show-table').checked;
+  const showGraph=V('sip-show-graph').checked;
+  V('sip-table-card').style.display=showTable?'block':'none';
+  V('sip-chart-card').style.display=showGraph?'block':'none';
+
+  if(showGraph){
+    if(charts.sip)charts.sip.destroy();
+    charts.sip=new Chart(V('sip-chart'),{
+      type:'bar',
+      data:{labels,datasets:[
+        {label:'Cumulative Invested',data:cumArr,backgroundColor:'rgba(100,116,139,0.25)',borderColor:'#94a3b8',borderWidth:1},
+        {label:`FV @ ${r1}%`,data:v1s,type:'line',borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.08)',borderWidth:2.5,pointRadius:3,tension:0.3},
+        ...(r2>0?[{label:`FV @ ${r2}%`,data:v2s,type:'line',borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,0.08)',borderWidth:2.5,pointRadius:3,tension:0.3}]:[])
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'top'}},scales:{x:{title:{display:true,text:'Year'}},y:{ticks:{callback:v=>{const l=Math.round(v/100000);return l+'L'}}}}}
+    });
+  }
+  V('sip-disc').textContent='* '+S.disclaimer+' Report Date: '+new Date().toLocaleDateString('en-GB');
+  V('sip-results').style.display='block';
+  setTimeout(()=>V('sip-results').scrollIntoView({behavior:'smooth',block:'start'}),100);
+}
+function resetSIP(){V('sip-amt').value=10000;V('sip-yrs').value=10;V('sip-r1').value=12;V('sip-r2').value=15;V('sip-client').value='';V('sip-results').style.display='none'}
+
+// ===================== CALCULATE SWP =====================
+function calcSWP(){
+  const corpus=parseFloat(V('swp-corpus').value)||10000000;
+  const age=parseInt(V('swp-age').value)||0;
+  const period=parseInt(V('swp-period').value)||25;
+  const r1=parseFloat(V('swp-r1').value)||10;
+  const r2=parseFloat(V('swp-r2').value)||0;
+  const balReq=parseFloat(V('swp-balance-req').value)||0;
+  const inflYes=document.querySelector('input[name="swp-infl"]:checked').value==='yes';
+  const inflRate=inflYes?parseFloat(V('swp-infl-rate').value)||6:0;
+  const taxYes=document.querySelector('input[name="swp-tax"]:checked').value==='yes';
+  const stcgRate=taxYes?parseFloat(V('swp-stcg').value)||20:0;
+  const ltcgRate=taxYes?parseFloat(V('swp-ltcg').value)||12.5:0;
+  const stcgYrs=taxYes?parseInt(V('swp-stcg-yrs').value)||1:0;
+  const indexRate=taxYes?parseFloat(V('swp-idx-rate').value)||6:0;
+
+  const monthly1=calcSWPMonthly(corpus,r1,period,balReq,inflRate,taxYes,stcgRate,ltcgRate,stcgYrs,indexRate);
+  const monthly2=r2>0?calcSWPMonthly(corpus,r2,period,balReq,inflRate,taxYes,stcgRate,ltcgRate,stcgYrs,indexRate):0;
+  const{rows:rows1,totalW:total1}=simulateSWP(corpus,r1,period,monthly1,inflRate,age,taxYes,stcgRate,ltcgRate,stcgYrs,indexRate,balReq);
+  const{rows:rows2,totalW:total2}=r2>0?simulateSWP(corpus,r2,period,monthly2,inflRate,age,taxYes,stcgRate,ltcgRate,stcgYrs,indexRate,balReq):{rows:[],totalW:0};
+
+  V('swp-rv-corpus').textContent=INRui(corpus);
+  V('swp-rl1').textContent=`1st Yr Monthly SWP (Sc.1 @ ${r1}%)`;
+  V('swp-rv1').textContent=INRui(monthly1);
+  V('swp-rl-total1').textContent=`Total Withdrawal (Sc.1)`;
+  V('swp-rv-total1').textContent=INRui(total1);
+  if(r2>0){
+    V('swp-ri2').style.display='block';
+    V('swp-ri-total2').style.display='block';
+    V('swp-rl2').textContent=`1st Yr Monthly SWP (Sc.2 @ ${r2}%)`;
+    V('swp-rv2').textContent=INRui(monthly2);
+    V('swp-rl-total2').textContent=`Total Withdrawal (Sc.2)`;
+    V('swp-rv-total2').textContent=INRui(total2);
+  } else {
+    V('swp-ri2').style.display='none';
+    V('swp-ri-total2').style.display='none';
+  }
+  V('swp-col-h1').textContent=`Scenario 1 @ ${r1}%`;
+  if(r2>0)V('swp-col-h2').textContent=`Scenario 2 @ ${r2}%`;
+
+  const tbody=V('swp-tbody');tbody.innerHTML='';
+  const maxRows=Math.max(rows1.length,rows2.length);
+  const labels=[],b1s=[],b2s=[];
+  for(let i=0;i<maxRows;i++){
+    const row1=rows1[i]||null;
+    const row2=rows2[i]||null;
+    const ageLabel=row1&&row1.age?row1.age:(row1?row1.year:row2.year);
+    labels.push(ageLabel);
+    b1s.push(row1?row1.yearEndBal:0);
+    if(r2>0)b2s.push(row2?row2.yearEndBal:0);
+    const tr=document.createElement('tr');
+    const bal1Style=row1&&row1.yearEndBal<corpus*0.2?'color:#dc2626;font-weight:600':'';
+    const bal2Style=row2&&row2.yearEndBal<corpus*0.2?'color:#dc2626;font-weight:600':'';
+    tr.innerHTML=`<td>${ageLabel}</td>
+      <td class="r" style="color:var(--muted);font-weight:600">₹</td>
+      <td class="r">${row1?INRui(row1.monthly):'—'}</td>
+      <td class="r" style="${bal1Style}">${row1?INRui(row1.yearEndBal):'—'}</td>
+      <td class="r" style="color:var(--muted);font-weight:600">₹</td>
+      <td class="r">${(r2>0&&row2)?INRui(row2.monthly):'—'}</td>
+      <td class="r" style="${bal2Style}">${(r2>0&&row2)?INRui(row2.yearEndBal):'—'}</td>`;
+    tbody.appendChild(tr);
+  }
+
+  const showTaxTable=V('swp-show-tax-table').checked&&taxYes;
+  V('swp-tax-card').style.display=showTaxTable?'block':'none';
+  if(showTaxTable){
+    V('swp-tax-h1').textContent=`Scenario 1 @ ${r1}%`;
+    if(r2>0)V('swp-tax-h2').textContent=`Scenario 2 @ ${r2}%`;
+    const taxTbody=V('swp-tax-tbody');taxTbody.innerHTML='';
+    for(let i=0;i<maxRows;i++){
+      const row1=rows1[i]||null;const row2=rows2[i]||null;
+      const ageLabel=row1&&row1.age?row1.age:(row1?row1.year:row2?row2.year:i+1);
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${ageLabel}</td>
+        <td class="r">${row1?INRui(row1.annualW):'—'}</td>
+        <td class="r">${row1?INRui(row1.taxPayable):'—'}</td>
+        <td class="r">${row1?INRui(row1.postTaxW):'—'}</td>
+        <td class="r">${(r2>0&&row2)?INRui(row2.annualW):'—'}</td>
+        <td class="r">${(r2>0&&row2)?INRui(row2.taxPayable):'—'}</td>
+        <td class="r">${(r2>0&&row2)?INRui(row2.postTaxW):'—'}</td>`;
+      taxTbody.appendChild(tr);
+    }
+  }
+
+  const showGraph=V('swp-show-graph').checked;
+  V('swp-chart-card').style.display=showGraph?'block':'none';
+  if(showGraph){
+    if(charts.swp)charts.swp.destroy();
+    charts.swp=new Chart(V('swp-chart'),{
+      type:'line',
+      data:{labels,datasets:[
+        {label:`Corpus @ ${r1}%`,data:b1s,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.1)',borderWidth:2.5,pointRadius:2,tension:0.3,fill:true},
+        ...(r2>0?[{label:`Corpus @ ${r2}%`,data:b2s,borderColor:'#10b981',backgroundColor:'rgba(16,185,129,0.08)',borderWidth:2.5,pointRadius:2,tension:0.3,fill:true}]:[])
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'top'}},scales:{x:{title:{display:true,text:age?'Age':'Year'}},y:{ticks:{callback:v=>{const l=Math.round(v/100000);return l+'L'}}}}}
+    });
+  }
+  V('swp-disc').textContent='* '+S.disclaimer+' Report Date: '+new Date().toLocaleDateString('en-GB');
+  V('swp-results').style.display='block';
+  setTimeout(()=>V('swp-results').scrollIntoView({behavior:'smooth',block:'start'}),100);
+}
+function resetSWP(){V('swp-corpus').value=10000000;V('swp-period').value=25;V('swp-r1').value=10;V('swp-r2').value=12;V('swp-client').value='';V('swp-results').style.display='none'}
+
+// ===================== CALCULATE ANNUAL LUMPSUM =====================
+function calcANN(){
+  const baseAmt=parseFloat(V('ann-amt').value)||100000;
+  const n=parseInt(V('ann-yrs').value)||10;
+  const r1=parseFloat(V('ann-r1').value)||12;
+  const r2=parseFloat(V('ann-r2').value)||0;
+  const stepUp=document.querySelector('input[name="ann-step"]:checked').value==='yes';
+  const stepPct=parseFloat(V('ann-step-pct').value)||10;
+  const tbody=V('ann-tbody');tbody.innerHTML='';
+  const labels=[],cumArr=[],v1s=[],v2s=[];
+  let fv1=0,fv2=0,cumInv=0,curAmt=baseAmt;
+  for(let y=1;y<=n;y++){
+    fv1=(fv1+curAmt)*Math.pow(1+r1/100,1);
+    if(r2>0)fv2=(fv2+curAmt)*Math.pow(1+r2/100,1);
+    cumInv+=curAmt;
+    labels.push(y);cumArr.push(cumInv);v1s.push(fv1);if(r2>0)v2s.push(fv2);
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${y}</td><td class="r">${INRui(curAmt)}</td><td class="r">${INRui(cumInv)}</td><td class="r">${INRui(fv1)}</td><td class="r">${r2>0?INRui(fv2):'—'}</td>`;
+    tbody.appendChild(tr);
+    if(stepUp)curAmt*=(1+stepPct/100);
+  }
+  V('ann-rv-total').textContent=INRui(cumInv);
+  V('ann-rl1').textContent=`FV @ Sc.1 (${r1}%)`;
+  V('ann-rv1').textContent=INRui(fv1);
+  V('ann-rv-gain').textContent=INRui(fv1-cumInv);
+  if(r2>0){
+    V('ann-ri2').style.display='block';
+    V('ann-rl2').textContent=`FV @ Sc.2 (${r2}%)`;
+    V('ann-rv2').textContent=INRui(fv2);
+    V('ann-th2').textContent=`FV @ Sc.2 (${r2}%)`;
+  } else V('ann-ri2').style.display='none';
+  V('ann-th1').textContent=`FV @ Sc.1 (${r1}%)`;
+
+  const showTable=V('ann-show-table').checked;
+  const showGraph=V('ann-show-graph').checked;
+  V('ann-table-card').style.display=showTable?'block':'none';
+  V('ann-chart-card').style.display=showGraph?'block':'none';
+
+  if(showGraph){
+    if(charts.ann)charts.ann.destroy();
+    charts.ann=new Chart(V('ann-chart'),{
+      type:'line',
+      data:{labels,datasets:[
+        {label:'Cumul. Invested',data:cumArr,borderColor:'#64748b',borderDash:[5,5],borderWidth:1.5,pointRadius:0,fill:false},
+        {label:`FV @ ${r1}%`,data:v1s,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.08)',borderWidth:2.5,pointRadius:3,tension:0.3,fill:true},
+        ...(r2>0?[{label:`FV @ ${r2}%`,data:v2s,borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,0.08)',borderWidth:2.5,pointRadius:3,tension:0.3,fill:true}]:[])
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'top'}},scales:{x:{title:{display:true,text:'Year'}},y:{ticks:{callback:v=>{const l=Math.round(v/100000);return l+'L'}}}}}
+    });
+  }
+  V('ann-disc').textContent='* '+S.disclaimer+' Report Date: '+new Date().toLocaleDateString('en-GB');
+  V('ann-results').style.display='block';
+  setTimeout(()=>V('ann-results').scrollIntoView({behavior:'smooth',block:'start'}),100);
+}
+function resetANN(){V('ann-amt').value=100000;V('ann-yrs').value=10;V('ann-r1').value=12;V('ann-r2').value=15;V('ann-client').value='';V('ann-results').style.display='none'}
+
+// ===================== PDF GENERATION =====================
+function getPDFDoc(){
+  const{jsPDF}=window.jspdf;
+  return new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+}
+
+// PDF uses Rs. (ASCII) since jsPDF built-in fonts don't support rupee unicode
+function pdfHeader(doc,title,subtitle){
+  const W=210,M=15;
+  const[r,g,b]=hexRGB(S.color1);
+  const[r2c,g2c,b2c]=hexRGB(S.color2);
+
+  // White header background
+  doc.setFillColor(255,255,255);
+  doc.rect(0,0,W,28,'F');
+
+  // Logo top-left
+  const logoSrc=S.logo;
+  let nameX=M;
+  if(logoSrc){
+    try{
+      doc.addImage(logoSrc,'PNG',M,4,32,18);
+      nameX=M+36;
+    }catch(e){}
+  }
+
+  // Company info (right of logo or left if no logo)
+  doc.setTextColor(r,g,b);
+  doc.setFontSize(8);
+  doc.setFont('helvetica','bold');
+  doc.text(`${S.fname} ${S.lname}`,nameX,10);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(7);
+  doc.setTextColor(80,80,80);
+  doc.text(S.company,nameX,15);
+
+  // ARN centered
+  if(S.arn){
+    doc.setFontSize(7);
+    doc.setTextColor(100,100,100);
+    doc.text(`ARN: ${S.arn}`,W/2,10,{align:'center'});
+  }
+
+  // Date top-right
+  doc.setFontSize(7);
+  doc.setTextColor(120,120,120);
+  doc.text('Date: '+new Date().toLocaleDateString('en-GB'),W-M,10,{align:'right'});
+
+  // Thin accent line below header
+  doc.setDrawColor(r2c,g2c,b2c);
+  doc.setLineWidth(0.8);
+  doc.line(0,28,W,28);
+
+  // Title bar with accent color
+  doc.setFillColor(r2c,g2c,b2c);
+  doc.rect(0,28,W,11,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(12);
+  doc.setFont('helvetica','bold');
+  doc.text(title,W/2,35.5,{align:'center'});
+
+  let yPos=43;
+  if(subtitle){
+    doc.setFontSize(9);doc.setFont('helvetica','normal');
+    doc.setTextColor(r,g,b);
+    doc.text(subtitle,W/2,yPos+2,{align:'center'});
+    yPos+=8;
+  }
+  return yPos+2;
+}
+
+function pdfFooter(doc){
+  const pageCount=doc.internal.getNumberOfPages();
+  const W=210,M=15;
+  const[r,g,b]=hexRGB(S.color1);
+  const[r2c,g2c,b2c]=hexRGB(S.color2);
+
+  for(let pg=1;pg<=pageCount;pg++){
+    doc.setPage(pg);
+
+    // Disclaimer box
+    const discY=250;
+    doc.setFillColor(248,250,252);
+    doc.rect(M,discY,W-2*M,16,'F');
+    doc.setDrawColor(r2c,g2c,b2c);
+    doc.setLineWidth(0.4);
+    doc.rect(M,discY,W-2*M,16,'S');
+    doc.setFontSize(6);
+    doc.setTextColor(100,100,100);
+    doc.setFont('helvetica','normal');
+    const discLines=doc.splitTextToSize('* '+S.disclaimer,W-2*M-6);
+    doc.text(discLines,M+3,discY+4.5);
+
+    // Thin accent line above footer
+    doc.setDrawColor(r2c,g2c,b2c);
+    doc.setLineWidth(0.8);
+    doc.line(0,267,W,267);
+
+    // White footer background
+    doc.setFillColor(255,255,255);
+    doc.rect(0,267,W,30,'F');
+
+    // Logo in footer if available
+    let footerLogoW=0;
+    if(S.logo){
+      try{
+        doc.addImage(S.logo,'PNG',M,270,28,14);
+        footerLogoW=32;
+      }catch(e){}
+    }
+
+    const footerContentX=M+footerLogoW;
+
+    doc.setTextColor(r,g,b);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(8);
+    doc.text(`${S.fname} ${S.lname}`,footerContentX,274);
+
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(7);
+    doc.setTextColor(60,60,60);
+    doc.text(S.company,footerContentX,278.5);
+
+    if(S.amfi==='yes'){
+      doc.setFontSize(6.5);
+      doc.setTextColor(r2c,g2c,b2c);
+      doc.text('AMFI-Registered Mutual Fund Distributor',footerContentX,282.5);
+    }
+
+    const contact=[S.email,S.phone].filter(Boolean).join('   |   ');
+    if(contact){
+      doc.setFontSize(6.5);
+      doc.setTextColor(100,100,100);
+      doc.text(contact,footerContentX,286.5);
+    }
+
+    // Page number right-aligned
+    doc.setFontSize(7);
+    doc.setTextColor(r,g,b);
+    doc.text(`Page ${pg} of ${pageCount}`,W-M,274,{align:'right'});
+  }
+}
+
+function pdfRow(doc,y,label,value,shade,W=210,M=15){
+  if(shade){doc.setFillColor(245,248,252);doc.rect(M,y-5,W-2*M,8,'F');}
+  doc.setFontSize(9);doc.setTextColor(80,80,80);doc.setFont('helvetica','normal');
+  doc.text(label,M+4,y);
+  doc.setFont('helvetica','bold');doc.setTextColor(25,25,25);
+  doc.text(value,W-M-4,y,{align:'right'});
+  return y+9;
+}
+
+function pdfSectionTitle(doc,y,txt,color1){
+  const[r,g,b]=hexRGB(color1);
+  doc.setFontSize(11);doc.setTextColor(r,g,b);doc.setFont('helvetica','bold');
+  doc.text(txt,105,y,{align:'center'});
+  doc.setDrawColor(r,g,b);doc.setLineWidth(0.35);
+  doc.line(M_CONST,y+2,210-M_CONST,y+2);
+  return y+9;
+}
+
+const M_CONST=15;
+
+function pdfTableHeader(doc,y,cols,W=210,M=15){
+  const[r,g,b]=hexRGB(S.color1);
+  const rowH=8;
+  doc.setFillColor(r,g,b);doc.rect(M,y,W-2*M,rowH,'F');
+  doc.setTextColor(255,255,255);doc.setFontSize(8);doc.setFont('helvetica','bold');
+  cols.forEach(c=>{
+    const align=c.align||'left';
+    if(align==='right')doc.text(c.text,c.x,y+5.5,{align:'right'});
+    else doc.text(c.text,c.x,y+5.5);
+  });
+  return y+rowH;
+}
+
+// ===================== PDF — LUMPSUM =====================
+function pdfLS(){
+  const doc=getPDFDoc();const W=210,M=15;
+  const client=V('ls-client').value||'';
+  const P=parseFloat(V('ls-amt').value)||500000;
+  const n=parseInt(V('ls-yrs').value)||10;
+  const r1=parseFloat(V('ls-r1').value)||12;
+  const r2=parseFloat(V('ls-r2').value)||0;
+  const fv1=lumpsumFV(P,r1,n);
+  const fv2=r2>0?lumpsumFV(P,r2,n):0;
+  const[rc,gc,bc]=hexRGB(S.color1);
+  const[r2c,g2c,b2c]=hexRGB(S.color2);
+
+  let y=pdfHeader(doc,'Lumpsum Investment Proposal',client?'Prepared For: '+client:'');
+  y+=4;
+  doc.setDrawColor(r2c,g2c,b2c);doc.setLineWidth(0.5);doc.line(M,y,W-M,y);y+=9;
+  y=pdfRow(doc,y,'Initial Investment',INR(P),true);
+  y=pdfRow(doc,y,'Investment Period',n+' Years',false);
+  y=pdfRow(doc,y,'Assumed Rate - Scenario 1',r1.toFixed(2)+' %',true);
+  if(r2>0)y=pdfRow(doc,y,'Assumed Rate - Scenario 2',r2.toFixed(2)+' %',false);
+  y+=5;
+
+  // FV highlight boxes
+  y=pdfSectionTitle(doc,y,'Expected Future Value',S.color1);
+  const boxW=r2>0?(W-2*M-6)/2:W-2*M;
+  // Box 1
+  doc.setFillColor(r2c,g2c,b2c);
+  doc.rect(M,y,boxW,20,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(8);doc.setFont('helvetica','normal');
+  doc.text('Scenario 1 @ '+r1.toFixed(2)+' %',M+4,y+7);
+  doc.setFontSize(14);doc.setFont('helvetica','bold');
+  doc.text(INR(fv1),M+boxW/2,y+15,{align:'center'});
+  // Gain
+  doc.setFontSize(7);doc.setFont('helvetica','normal');
+  doc.setTextColor(220,240,255);
+  doc.text('Gain: '+INR(fv1-P),M+boxW/2,y+20.5,{align:'center'});
+  if(r2>0){
+    doc.setFillColor(rc,gc,bc);
+    doc.rect(M+boxW+6,y,boxW,20,'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(8);doc.setFont('helvetica','normal');
+    doc.text('Scenario 2 @ '+r2.toFixed(2)+' %',M+boxW+6+4,y+7);
+    doc.setFontSize(14);doc.setFont('helvetica','bold');
+    doc.text(INR(fv2),M+boxW+6+boxW/2,y+15,{align:'center'});
+    doc.setFontSize(7);doc.setFont('helvetica','normal');
+    doc.setTextColor(220,240,255);
+    doc.text('Gain: '+INR(fv2-P),M+boxW+6+boxW/2,y+20.5,{align:'center'});
+  }
+  y+=26;
+
+  // Year-wise table
+  const rptType=document.querySelector('input[name="ls-rpt"]:checked').value;
+  if(rptType!=='summary'){
+    doc.addPage();
+    y=pdfHeader(doc,'Lumpsum Investment Proposal',client?'Prepared For: '+client:'');
+    y+=4;
+    y=pdfSectionTitle(doc,y,'Year-Wise Projected Investment Value',S.color1);
+    const c1x=M+4,c2x=M+70,c3x=r2>0?W-M-42:W-M-4,c4x=W-M-4;
+    y=pdfTableHeader(doc,y,[
+      {text:'Year',x:c1x},
+      {text:'Investment Amount',x:c2x,align:'right'},
+      {text:'Value @ '+r1+'%',x:c3x,align:'right'},
+      ...(r2>0?[{text:'Value @ '+r2+'%',x:c4x,align:'right'}]:[])
+    ]);
+    for(let yr=1;yr<=n;yr++){
+      const v1=lumpsumFV(P,r1,yr);const v2=r2>0?lumpsumFV(P,r2,yr):0;
+      const shade=yr%2!==0;
+      if(shade){doc.setFillColor(247,249,252);doc.rect(M,y,W-2*M,7,'F');}
+      doc.setFontSize(8.5);doc.setTextColor(30,30,30);doc.setFont('helvetica','normal');
+      doc.text(String(yr),c1x,y+5);
+      doc.text(yr===1?INR(P):'—',c2x,y+5,{align:'right'});
+      doc.text(INR(v1),c3x,y+5,{align:'right'});
+      if(r2>0)doc.text(INR(v2),c4x,y+5,{align:'right'});
+      y+=7;if(y>248){doc.addPage();y=22;}
+    }
+    // Total row
+    doc.setFillColor(r2c,g2c,b2c);doc.rect(M,y,W-2*M,8,'F');
+    doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(9);
+    doc.text('Final Value (Year '+n+')',c1x,y+5.5);
+    doc.text(INR(fv1),c3x,y+5.5,{align:'right'});
+    if(r2>0)doc.text(INR(fv2),c4x,y+5.5,{align:'right'});
+  }
+
+  pdfFooter(doc);
+  doc.save('Lumpsum_Proposal_'+(client||'report')+'.pdf');
+}
+
+// ===================== PDF — SIP =====================
+function pdfSIP(){
+  const doc=getPDFDoc();const W=210,M=15;
+  const client=V('sip-client').value||'';
+  const m=parseFloat(V('sip-amt').value)||10000;
+  const n=parseInt(V('sip-yrs').value)||10;
+  const r1=parseFloat(V('sip-r1').value)||12;
+  const r2=parseFloat(V('sip-r2').value)||0;
+  const fv1=sipFV(m,r1,n);
+  const fv2=r2>0?sipFV(m,r2,n):0;
+  const totalInv=m*n*12;
+  const[rc,gc,bc]=hexRGB(S.color1);
+  const[r2c,g2c,b2c]=hexRGB(S.color2);
+
+  let y=pdfHeader(doc,'SIP Investment Proposal',client?'Prepared For: '+client:'');
+  y+=4;
+
+  doc.setDrawColor(r2c,g2c,b2c);doc.setLineWidth(0.5);doc.line(M,y,W-M,y);y+=9;
+  y=pdfRow(doc,y,'Monthly SIP Amount',INR(m),true);
+  y=pdfRow(doc,y,'SIP Period',n+' Years',false);
+  y=pdfRow(doc,y,'Total Amount Invested',INR(totalInv),true);
+  y=pdfRow(doc,y,'Scenario 1 Rate of Return',r1.toFixed(2)+' % p.a.',false);
+  if(r2>0)y=pdfRow(doc,y,'Scenario 2 Rate of Return',r2.toFixed(2)+' % p.a.',true);
+  y+=5;
+
+  y=pdfSectionTitle(doc,y,'Expected Future Value',S.color1);
+  const boxW=r2>0?(W-2*M-6)/2:W-2*M;
+  doc.setFillColor(r2c,g2c,b2c);
+  doc.rect(M,y,boxW,20,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(8);doc.setFont('helvetica','normal');
+  doc.text('Scenario 1 @ '+r1.toFixed(2)+' %',M+4,y+7);
+  doc.setFontSize(14);doc.setFont('helvetica','bold');
+  doc.text(INR(fv1),M+boxW/2,y+15,{align:'center'});
+  doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(220,240,255);
+  doc.text('Wealth Gain: '+INR(fv1-totalInv),M+boxW/2,y+20.5,{align:'center'});
+  if(r2>0){
+    doc.setFillColor(rc,gc,bc);
+    doc.rect(M+boxW+6,y,boxW,20,'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(8);doc.setFont('helvetica','normal');
+    doc.text('Scenario 2 @ '+r2.toFixed(2)+' %',M+boxW+6+4,y+7);
+    doc.setFontSize(14);doc.setFont('helvetica','bold');
+    doc.text(INR(fv2),M+boxW+6+boxW/2,y+15,{align:'center'});
+    doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(220,240,255);
+    doc.text('Wealth Gain: '+INR(fv2-totalInv),M+boxW+6+boxW/2,y+20.5,{align:'center'});
+  }
+  y+=26;
+
+  // 3-box summary: invested, gain, xirr-like
+  const bw3=(W-2*M-8)/3;
+  doc.setFillColor(245,247,252);
+  doc.rect(M,y,W-2*M,14,'F');
+  doc.setDrawColor(r2c,g2c,b2c);
+  doc.rect(M,y,W-2*M,14,'S');
+  [[INR(totalInv),'Total Invested',0],[INR(fv1-totalInv),'Wealth Gained (Sc.1)',1],[INR(fv1),'Total Corpus (Sc.1)',2]].forEach(([val,lbl,idx])=>{
+    const bx=M+idx*(bw3+4);
+    doc.setFontSize(7);doc.setTextColor(100,100,120);doc.setFont('helvetica','normal');
+    doc.text(lbl,bx+bw3/2,y+5,{align:'center'});
+    doc.setFontSize(10);doc.setTextColor(rc,gc,bc);doc.setFont('helvetica','bold');
+    doc.text(val,bx+bw3/2,y+11,{align:'center'});
+  });
+  y+=19;
+
+  const rptType=document.querySelector('input[name="sip-rpt"]:checked').value;
+  if(rptType!=='summary'){
+    doc.addPage();
+    y=pdfHeader(doc,'SIP Investment Proposal',client?'Prepared For: '+client:'');
+    y+=4;
+    y=pdfSectionTitle(doc,y,'Year-Wise Projected SIP Value',S.color1);
+    // Columns: Year | Monthly SIP | Annual Invest. | Cumul. Invested | FV@r1% | FV@r2%
+    // Widths: W=210, M=15, usable=180
+    const c1x=M+4;        // Year (left)
+    const c2x=M+20;       // Monthly SIP right edge
+    const c3x=M+55;       // Annual Invest. right edge
+    const c4x=M+92;       // Cumul. Invested right edge
+    const c5x=r2>0?W-M-42:W-M-4; // FV@r1% right edge
+    const c6x=W-M-4;      // FV@r2% right edge
+    y=pdfTableHeader(doc,y,[
+      {text:'Year',x:c1x},
+      {text:'Monthly SIP',x:c2x+18,align:'right'},
+      {text:'Annual Invest.',x:c3x+18,align:'right'},
+      {text:'Cumul. Invested',x:c4x+18,align:'right'},
+      {text:'FV @ '+r1+'%',x:c5x,align:'right'},
+      ...(r2>0?[{text:'FV @ '+r2+'%',x:c6x,align:'right'}]:[])
+    ]);
+    for(let yr=1;yr<=n;yr++){
+      const v1=sipFVAtYear(m,r1,yr);const v2=r2>0?sipFVAtYear(m,r2,yr):0;
+      const ci=m*yr*12;
+      const shade=yr%2!==0;
+      if(shade){doc.setFillColor(247,249,252);doc.rect(M,y,W-2*M,7,'F');}
+      doc.setFontSize(8.5);doc.setTextColor(30,30,30);doc.setFont('helvetica','normal');
+      doc.text(String(yr),c1x,y+5);
+      doc.text(INR(m),c2x+18,y+5,{align:'right'});
+      doc.text(INR(m*12),c3x+18,y+5,{align:'right'});
+      doc.text(INR(ci),c4x+18,y+5,{align:'right'});
+      doc.text(INR(v1),c5x,y+5,{align:'right'});
+      if(r2>0)doc.text(INR(v2),c6x,y+5,{align:'right'});
+      y+=7;if(y>248){doc.addPage();y=22;}
+    }
+    // Total row
+    doc.setFillColor(r2c,g2c,b2c);doc.rect(M,y,W-2*M,8,'F');
+    doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(9);
+    doc.text('Total',c1x,y+5.5);
+    doc.text(INR(totalInv),c4x+18,y+5.5,{align:'right'});
+    doc.text(INR(fv1),c5x,y+5.5,{align:'right'});
+    if(r2>0)doc.text(INR(fv2),c6x,y+5.5,{align:'right'});
+  }
+
+  pdfFooter(doc);
+  doc.save('SIP_Proposal_'+(client||'report')+'.pdf');
+}
+
+// ===================== PDF — SWP =====================
+function pdfSWP(){
+  const doc=getPDFDoc();const W=210,M=15;
+  const client=V('swp-client').value||'';
+  const corpus=parseFloat(V('swp-corpus').value)||10000000;
+  const age=parseInt(V('swp-age').value)||0;
+  const period=parseInt(V('swp-period').value)||25;
+  const r1=parseFloat(V('swp-r1').value)||10;
+  const r2=parseFloat(V('swp-r2').value)||0;
+  const balReq=parseFloat(V('swp-balance-req').value)||0;
+  const inflYes=document.querySelector('input[name="swp-infl"]:checked').value==='yes';
+  const inflRate=inflYes?parseFloat(V('swp-infl-rate').value)||6:0;
+  const taxYes=document.querySelector('input[name="swp-tax"]:checked').value==='yes';
+  const stcgRate=taxYes?parseFloat(V('swp-stcg').value)||20:0;
+  const ltcgRate=taxYes?parseFloat(V('swp-ltcg').value)||12.5:0;
+  const stcgYrs=taxYes?parseInt(V('swp-stcg-yrs').value)||1:0;
+  const indexRate=taxYes?parseFloat(V('swp-idx-rate').value)||6:0;
+
+  const monthly1=calcSWPMonthly(corpus,r1,period,balReq,inflRate,taxYes,stcgRate,ltcgRate,stcgYrs,indexRate);
+  const monthly2=r2>0?calcSWPMonthly(corpus,r2,period,balReq,inflRate,taxYes,stcgRate,ltcgRate,stcgYrs,indexRate):0;
+  const{rows:rows1,totalW:total1}=simulateSWP(corpus,r1,period,monthly1,inflRate,age,taxYes,stcgRate,ltcgRate,stcgYrs,indexRate,balReq);
+  const{rows:rows2,totalW:total2}=r2>0?simulateSWP(corpus,r2,period,monthly2,inflRate,age,taxYes,stcgRate,ltcgRate,stcgYrs,indexRate,balReq):{rows:[],totalW:0};
+
+  const[rc,gc,bc]=hexRGB(S.color1);
+  const[r2c,g2c,b2c]=hexRGB(S.color2);
+
+  let y=pdfHeader(doc,'SWP Investment Proposal',client?'Prepared For: '+client:'');
+  y+=4;
+  doc.setDrawColor(r2c,g2c,b2c);doc.setLineWidth(0.5);doc.line(M,y,W-M,y);y+=9;
+  if(age)y=pdfRow(doc,y,'Current Age',age+' Years',true);
+  y=pdfRow(doc,y,'Initial Investment (Corpus)',INR(corpus),!age);
+  y=pdfRow(doc,y,'SWP Period',period+' Years',true);
+  if(inflYes)y=pdfRow(doc,y,'Expected Inflation Rate',inflRate.toFixed(2)+' %',false);
+  if(taxYes){
+    y=pdfRow(doc,y,'Capital Gain Tax (Short Term)',stcgRate.toFixed(2)+' %',true);
+    y=pdfRow(doc,y,'Capital Gain Tax (Long Term)',ltcgRate.toFixed(2)+' %',false);
+  }
+  y=pdfRow(doc,y,'Balance Required at End',balReq>0?INR(balReq):'Nil',true);
+  y+=5;
+
+  y=pdfSectionTitle(doc,y,'First Year Monthly SWP Amount',S.color1);
+  const bw=(W-2*M-6)/2;
+  doc.setFillColor(r2c,g2c,b2c);
+  doc.rect(M,y,r2>0?bw:W-2*M,18,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(8);doc.setFont('helvetica','normal');
+  doc.text('Scenario 1 @ '+r1.toFixed(2)+' %',M+4,y+6.5);
+  doc.setFontSize(13);doc.setFont('helvetica','bold');
+  doc.text(INR(monthly1),M+(r2>0?bw/2:(W-2*M)/2),y+14,{align:'center'});
+  if(r2>0){
+    doc.setFillColor(rc,gc,bc);
+    doc.rect(M+bw+6,y,bw,18,'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(8);doc.setFont('helvetica','normal');
+    doc.text('Scenario 2 @ '+r2.toFixed(2)+' %',M+bw+6+4,y+6.5);
+    doc.setFontSize(13);doc.setFont('helvetica','bold');
+    doc.text(INR(monthly2),M+bw+6+bw/2,y+14,{align:'center'});
+  }
+  y+=22;
+
+  y=pdfSectionTitle(doc,y,'Total Withdrawal Over Period',S.color1);
+  doc.setFillColor(245,247,252);
+  doc.rect(M,y,r2>0?bw:W-2*M,16,'F');
+  doc.setDrawColor(r2c,g2c,b2c);
+  doc.rect(M,y,r2>0?bw:W-2*M,16,'S');
+  doc.setTextColor(80,80,80);doc.setFontSize(8);doc.setFont('helvetica','normal');
+  doc.text('Scenario 1 @ '+r1.toFixed(2)+' %',M+4,y+6);
+  doc.setTextColor(rc,gc,bc);doc.setFontSize(12);doc.setFont('helvetica','bold');
+  doc.text(INR(total1),M+(r2>0?bw/2:(W-2*M)/2),y+13,{align:'center'});
+  if(r2>0){
+    doc.setFillColor(245,247,252);
+    doc.rect(M+bw+6,y,bw,16,'F');
+    doc.setDrawColor(r2c,g2c,b2c);
+    doc.rect(M+bw+6,y,bw,16,'S');
+    doc.setTextColor(80,80,80);doc.setFontSize(8);doc.setFont('helvetica','normal');
+    doc.text('Scenario 2 @ '+r2.toFixed(2)+' %',M+bw+6+4,y+6);
+    doc.setTextColor(rc,gc,bc);doc.setFontSize(12);doc.setFont('helvetica','bold');
+    doc.text(INR(total2),M+bw+6+bw/2,y+13,{align:'center'});
+  }
+  y+=20;
+
+  const rptType=document.querySelector('input[name="swp-rpt"]:checked').value;
+  if(rptType!=='summary'){
+    doc.addPage();
+    y=pdfHeader(doc,'SWP Investment Proposal',client?'Prepared For: '+client:'');
+    y+=5;
+    y=pdfSectionTitle(doc,y,'Year-Wise Withdrawal & Portfolio Balance',S.color1);
+
+    const[r1h,g1h,b1h]=hexRGB(S.color1);
+    const colW=r2>0?(W-2*M)/5:(W-2*M)/3;
+    const lbl=age?'Age':'Year';
+
+    doc.setFillColor(r1h,g1h,b1h);doc.rect(M,y,W-2*M,13,'F');
+    doc.setTextColor(255,255,255);doc.setFontSize(8);doc.setFont('helvetica','bold');
+    doc.text(lbl,M+3,y+5.5);
+    if(r2>0){
+      doc.text('Scenario 1 @ '+r1+'%',M+colW+colW,y+5.5,{align:'center'});
+      doc.text('Scenario 2 @ '+r2+'%',M+colW+3*colW,y+5.5,{align:'center'});
+      doc.setFontSize(7);
+      doc.text('Monthly SWP',M+colW+4,y+11);
+      doc.text('Year End Balance',M+2*colW-3,y+11,{align:'right'});
+      doc.text('Monthly SWP',M+3*colW+4,y+11);
+      doc.text('Year End Balance',M+4*colW+colW-3,y+11,{align:'right'});
+    } else {
+      doc.text('Scenario 1 @ '+r1+'%',M+colW+colW,y+5.5,{align:'center'});
+      doc.setFontSize(7);
+      doc.text('Monthly SWP',M+colW+4,y+11);
+      doc.text('Year End Balance',M+2*colW+colW-3,y+11,{align:'right'});
+    }
+    y+=13;
+
+    const maxRows=Math.max(rows1.length,rows2.length);
+    for(let i=0;i<maxRows;i++){
+      const row1=rows1[i]||null;const row2=rows2[i]||null;
+      const ageLabel=row1&&row1.age?row1.age:(row1?row1.year:row2.year);
+      const shade=i%2===0;
+      if(shade){doc.setFillColor(247,249,252);doc.rect(M,y,W-2*M,7,'F');}
+      doc.setFontSize(8.5);doc.setTextColor(30,30,30);doc.setFont('helvetica','normal');
+      doc.text(String(ageLabel),M+3,y+5);
+      if(r2>0){
+        doc.text(row1?INR(row1.monthly):'—',M+2*colW-3,y+5,{align:'right'});
+        doc.text(row1?INR(row1.yearEndBal):'—',M+2*colW+colW-3,y+5,{align:'right'});
+        doc.text(row2?INR(row2.monthly):'—',M+3*colW+colW-3,y+5,{align:'right'});
+        doc.text(row2?INR(row2.yearEndBal):'—',M+5*colW-3,y+5,{align:'right'});
+      } else {
+        doc.text(row1?INR(row1.monthly):'—',M+2*colW-3,y+5,{align:'right'});
+        doc.text(row1?INR(row1.yearEndBal):'—',M+3*colW-3,y+5,{align:'right'});
+      }
+      y+=7;if(y>248){doc.addPage();y=22;}
+    }
+
+    if(taxYes&&V('swp-show-tax-table').checked){
+      if(y>220){doc.addPage();y=22;}
+      else y+=8;
+      y=pdfSectionTitle(doc,y,'Annual Tax & Post-Tax Withdrawal',S.color1);
+      const tc=r2>0?7:4;
+      const tw=(W-2*M)/tc;
+      doc.setFillColor(r1h,g1h,b1h);doc.rect(M,y,W-2*M,13,'F');
+      doc.setTextColor(255,255,255);doc.setFontSize(7.5);doc.setFont('helvetica','bold');
+      if(r2>0){
+        doc.text('Sc.1 @ '+r1+'%',M+tw+tw,y+5.5,{align:'center'});
+        doc.text('Sc.2 @ '+r2+'%',M+tw+4*tw,y+5.5,{align:'center'});
+        doc.text('Year',M+3,y+5.5);
+        doc.setFontSize(6.5);
+        ['Annual W','Tax Payable','Post-Tax W','Annual W','Tax Payable','Post-Tax W'].forEach((h,i)=>{
+          doc.text(h,M+tw*(i+1)+tw-2,y+11,{align:'right'});
+        });
+      } else {
+        doc.text('Scenario 1 @ '+r1+'%',M+2*tw,y+5.5,{align:'center'});
+        doc.text('Year',M+3,y+5.5);
+        doc.setFontSize(6.5);
+        ['Annual W','Tax Payable','Post-Tax W'].forEach((h,i)=>{
+          doc.text(h,M+tw*(i+1)+tw-2,y+11,{align:'right'});
+        });
+      }
+      y+=13;
+      for(let i=0;i<maxRows;i++){
+        const row1=rows1[i]||null;const row2=rows2[i]||null;
+        const ageLabel=row1&&row1.age?row1.age:(row1?row1.year:row2?row2.year:i+1);
+        const shade=i%2===0;
+        if(shade){doc.setFillColor(247,249,252);doc.rect(M,y,W-2*M,7,'F');}
+        doc.setFontSize(8);doc.setTextColor(30,30,30);doc.setFont('helvetica','normal');
+        doc.text(String(ageLabel),M+3,y+5);
+        if(row1){
+          doc.text(INR(row1.annualW),M+2*tw-2,y+5,{align:'right'});
+          doc.text(INR(row1.taxPayable),M+3*tw-2,y+5,{align:'right'});
+          doc.text(INR(row1.postTaxW),M+4*tw-2,y+5,{align:'right'});
+        }
+        if(r2>0&&row2){
+          doc.text(INR(row2.annualW),M+5*tw-2,y+5,{align:'right'});
+          doc.text(INR(row2.taxPayable),M+6*tw-2,y+5,{align:'right'});
+          doc.text(INR(row2.postTaxW),M+7*tw-2,y+5,{align:'right'});
+        }
+        y+=7;if(y>248){doc.addPage();y=22;}
+      }
+    }
+  }
+  pdfFooter(doc);
+  doc.save('SWP_Proposal_'+(client||'report')+'.pdf');
+}
+
+// ===================== PDF — ANNUAL LUMPSUM =====================
+function pdfANN(){
+  const doc=getPDFDoc();const W=210,M=15;
+  const client=V('ann-client').value||'';
+  const baseAmt=parseFloat(V('ann-amt').value)||100000;
+  const n=parseInt(V('ann-yrs').value)||10;
+  const r1=parseFloat(V('ann-r1').value)||12;
+  const r2=parseFloat(V('ann-r2').value)||0;
+  const stepUp=document.querySelector('input[name="ann-step"]:checked').value==='yes';
+  const stepPct=parseFloat(V('ann-step-pct').value)||10;
+  const[rc,gc,bc]=hexRGB(S.color1);
+  const[r2c,g2c,b2c]=hexRGB(S.color2);
+
+  let y=pdfHeader(doc,'Annual Lumpsum Investment Proposal',client?'Prepared For: '+client:'');
+  y+=4;
+  doc.setDrawColor(r2c,g2c,b2c);doc.setLineWidth(0.5);doc.line(M,y,W-M,y);y+=9;
+  y=pdfRow(doc,y,'Annual Investment Amount',INR(baseAmt),true);
+  y=pdfRow(doc,y,'Investment Period',n+' Years',false);
+  if(stepUp)y=pdfRow(doc,y,'Annual Step-Up',stepPct+'%',true);
+  y=pdfRow(doc,y,'Scenario 1 Rate',r1.toFixed(2)+' % p.a.',!stepUp);
+  if(r2>0)y=pdfRow(doc,y,'Scenario 2 Rate',r2.toFixed(2)+' % p.a.',true);
+  y+=5;
+
+  // Calculate finals
+  let fv1f=0,fv2f=0,cumInvF=0,curAmtF=baseAmt;
+  for(let yr=1;yr<=n;yr++){
+    fv1f=(fv1f+curAmtF)*Math.pow(1+r1/100,1);
+    if(r2>0)fv2f=(fv2f+curAmtF)*Math.pow(1+r2/100,1);
+    cumInvF+=curAmtF;
+    if(stepUp)curAmtF*=(1+stepPct/100);
+  }
+
+  y=pdfSectionTitle(doc,y,'Expected Future Value',S.color1);
+  const boxW=r2>0?(W-2*M-6)/2:W-2*M;
+  doc.setFillColor(r2c,g2c,b2c);
+  doc.rect(M,y,boxW,20,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(8);doc.setFont('helvetica','normal');
+  doc.text('Scenario 1 @ '+r1.toFixed(2)+' %',M+4,y+7);
+  doc.setFontSize(14);doc.setFont('helvetica','bold');
+  doc.text(INR(fv1f),M+boxW/2,y+15,{align:'center'});
+  doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(220,240,255);
+  doc.text('Gain: '+INR(fv1f-cumInvF),M+boxW/2,y+20.5,{align:'center'});
+  if(r2>0){
+    doc.setFillColor(rc,gc,bc);
+    doc.rect(M+boxW+6,y,boxW,20,'F');
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(8);doc.setFont('helvetica','normal');
+    doc.text('Scenario 2 @ '+r2.toFixed(2)+' %',M+boxW+6+4,y+7);
+    doc.setFontSize(14);doc.setFont('helvetica','bold');
+    doc.text(INR(fv2f),M+boxW+6+boxW/2,y+15,{align:'center'});
+    doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(220,240,255);
+    doc.text('Gain: '+INR(fv2f-cumInvF),M+boxW+6+boxW/2,y+20.5,{align:'center'});
+  }
+  y+=26;
+
+  const rptType=document.querySelector('input[name="ann-rpt"]:checked').value;
+  if(rptType!=='summary'){
+    doc.addPage();
+    y=pdfHeader(doc,'Annual Lumpsum Investment Proposal',client?'Prepared For: '+client:'');
+    y+=4;
+    y=pdfSectionTitle(doc,y,'Year-Wise Projected Annual Investment Value',S.color1);
+    // Year | Annual Investment | Cumulative Invested | FV@r1% | FV@r2%
+    const c1x=M+4;
+    const c2x=M+55;  // Annual Investment right edge
+    const c3x=M+105; // Cumulative Invested right edge
+    const c4x=r2>0?W-M-42:W-M-4; // FV@r1% right edge
+    const c5x=W-M-4; // FV@r2% right edge
+    y=pdfTableHeader(doc,y,[
+      {text:'Year',x:c1x},
+      {text:'Annual Investment',x:c2x,align:'right'},
+      {text:'Cumulative Invested',x:c3x,align:'right'},
+      {text:'FV @ '+r1+'%',x:c4x,align:'right'},
+      ...(r2>0?[{text:'FV @ '+r2+'%',x:c5x,align:'right'}]:[])
+    ]);
+    let fv1=0,fv2=0,ci=0,curAmt=baseAmt;
+    for(let yr=1;yr<=n;yr++){
+      fv1=(fv1+curAmt)*Math.pow(1+r1/100,1);
+      if(r2>0)fv2=(fv2+curAmt)*Math.pow(1+r2/100,1);
+      ci+=curAmt;
+      const shade=yr%2!==0;
+      if(shade){doc.setFillColor(247,249,252);doc.rect(M,y,W-2*M,7,'F');}
+      doc.setFontSize(8.5);doc.setTextColor(30,30,30);doc.setFont('helvetica','normal');
+      doc.text(String(yr),c1x,y+5);
+      doc.text(INR(curAmt),c2x,y+5,{align:'right'});
+      doc.text(INR(ci),c3x,y+5,{align:'right'});
+      doc.text(INR(fv1),c4x,y+5,{align:'right'});
+      if(r2>0)doc.text(INR(fv2),c5x,y+5,{align:'right'});
+      y+=7;if(y>248){doc.addPage();y=22;}
+      if(stepUp)curAmt*=(1+stepPct/100);
+    }
+    // Total row
+    doc.setFillColor(r2c,g2c,b2c);doc.rect(M,y,W-2*M,8,'F');
+    doc.setTextColor(255,255,255);doc.setFont('helvetica','bold');doc.setFontSize(9);
+    doc.text('Final (Year '+n+')',c1x,y+5.5);
+    doc.text(INR(ci),c3x,y+5.5,{align:'right'});
+    doc.text(INR(fv1f),c4x,y+5.5,{align:'right'});
+    if(r2>0)doc.text(INR(fv2f),c5x,y+5.5,{align:'right'});
+  }
+
+  pdfFooter(doc);
+  doc.save('Annual_Lumpsum_Proposal_'+(client||'report')+'.pdf');
+}
+
+// ===================== SETTINGS =====================
+function saveSettings(){
+  S.fname=V('s-fname').value||S.fname;
+  S.lname=V('s-lname').value||S.lname;
+  S.company=V('s-company').value||S.company;
+  S.phone=V('s-phone').value||S.phone;
+  S.email=V('s-email').value||S.email;
+  S.website=V('s-website').value;
+  S.arn=V('s-arn').value;
+  S.euin=V('s-euin').value;
+  S.gst=V('s-gst').value;
+  S.amfi=document.querySelector('input[name="s-amfi"]:checked').value;
+  S.addr1=V('s-addr1').value;
+  S.addr2=V('s-addr2').value;
+  S.city=V('s-city').value;
+  S.color1=V('s-color1').value;
+  S.color2=V('s-color2').value;
+  S.disclaimer=V('s-disclaimer').value||S.disclaimer;
+  V('sb-footer').innerHTML='Investment Proposal Tool';
+  const banner=V('save-banner');
+  banner.style.display='block';
+  setTimeout(()=>banner.style.display='none',2500);
+}
+
+function loadDefaultSettings(){
+  V('s-fname').value='Prafull';
+  V('s-lname').value='Bothra';
+  V('s-company').value='SPB Finserv Private Limited';
+  V('s-phone').value='9372611447';
+  V('s-email').value='sandpwealth@gmail.com';
+  V('s-addr1').value='212, Lalganga Business Park';
+  V('s-addr2').value='Raipur, Chhattisgarh - 492001';
+  V('s-city').value='Raipur';
+  V('s-color1').value='#0f2744';
+  V('s-color2').value='#3b82f6';
+  document.getElementById('s-c1hex').textContent='#0f2744';
+  document.getElementById('s-c2hex').textContent='#3b82f6';
+}
+
+function uploadLogo(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    S.logo=ev.target.result;
+    V('logo-box').innerHTML='<img src="'+ev.target.result+'">';
+    // Also update sidebar and topbar logos
+    const sbImg=document.getElementById('sb-logo-img');
+    if(sbImg){sbImg.src=ev.target.result;sbImg.style.display='block';}
+    document.getElementById('sb-logo-fallback').style.display='none';
+    const tbImg=document.getElementById('topbar-logo');
+    if(tbImg){tbImg.src=ev.target.result;tbImg.style.display='block';}
+  };
+  reader.readAsDataURL(file);
+}
+
+// Init
+loadDefaultSettings();
+// Try to show topbar logo if it loads
+document.getElementById('topbar-logo').addEventListener('load',function(){this.style.display='block';});
+</script>
+</body>
+</html>
